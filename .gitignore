@@ -7,11 +7,12 @@ venv/
 .cache/
 
 .idea/
+.vscode/
 
 # Build artifacts
 build/
 dist/
-aft.egg-info/
+*.egg-info/
 
 # Test output
 test-reports/
