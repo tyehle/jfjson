@@ -3,10 +3,11 @@ from typing import Any, BinaryIO, Dict, IO, TextIO, Tuple, Union
 
 
 class JsonConversionError(ValueError):
-    """Subclass of ValueError with the following additional properties:
+    """Subclass of ValueError with additional properties.
 
-    msg: The unformatted error message
-    loc: The position in the json object where conversion failed
+    Attributes:
+        msg: The unformatted error message
+        loc: The position in the json object where conversion failed
     """
 
     msg: str
@@ -23,7 +24,7 @@ class JsonConversionError(ValueError):
         return self.__class__, (self.msg, self.loc)
 
 
-########## Reading ##########
+# ---------- Reading ---------- #
 
 
 def read_class_instance(obj: Dict[str, Any], target: type, loc: str) -> Any:
@@ -40,20 +41,22 @@ def read_class_instance(obj: Dict[str, Any], target: type, loc: str) -> Any:
         )
 
     # make sure our location ends with a .
-    loc = loc if loc.endswith(".") else loc + "."
-
-    kwargs = {key: read_rec(value, attrs[key], loc + key) for key, value in obj.items()}
+    sub_loc = loc if loc.endswith(".") else loc + "."
+    kwargs = {
+        key: read_rec(value, attrs[key], sub_loc + key) for key, value in obj.items()
+    }
 
     # Emit some better error messages if this doesn't go well
     try:
         return target(**kwargs)
-    except:
+    except Exception:
         raise JsonConversionError(
             f"Object creation failed {target.__name__}(**{kwargs})", loc
         )
 
 
 def valid_type_for_dict(t: type) -> bool:
+    """If the given type is a valid target when reading a dict."""
     return (
         t not in (type(None), str, int, float, bool)
         and getattr(t, "__origin__", None) is not list
@@ -61,6 +64,19 @@ def valid_type_for_dict(t: type) -> bool:
 
 
 def read_rec(obj: Any, target: type, loc: str) -> Any:
+    """A recursive version of read for internal use.
+
+    Args:
+        obj: The json object to convert
+        target: The type to convert to
+        loc: The location in the original json object where we are now working
+
+    Raises:
+        JsonConversionError: If there are problems reading the json as the given type
+
+    Returns:
+        The new object of the target type
+    """
     # special case: do no type checking or additional parsing
     if target is Any:
         return obj
@@ -75,7 +91,7 @@ def read_rec(obj: Any, target: type, loc: str) -> Any:
 
     if obj is None:
         is_optional = origin is Union and type(None) in type_args
-        if origin is not type(None) or not is_optional:
+        if origin is not type(None) or not is_optional:  # noqa
             raise type_err
         return obj
 
@@ -139,18 +155,50 @@ def read_rec(obj: Any, target: type, loc: str) -> Any:
 
 
 def read(obj: Any, target: type) -> Any:
+    """Read some decoded json as an object of the given type.
+
+    Args:
+        obj: The decoded json to convert
+        target: The type to convert to
+
+    Raises:
+        JsonConversionError
+
+    Returns:
+        The new object of the given type
+    """
     return read_rec(obj, target, loc=".")
 
 
 def load(fh: Union[TextIO, BinaryIO], target: type, **kwargs: Any) -> Any:
+    """Wraps the standard json load and read in a single call.
+
+    Args:
+        fh: The file handle to read json from
+        target: The type of object to create
+        **kwargs: Additional arguments passed through to the call to json.load
+
+    Returns:
+        The new object of the given type
+    """
     return read(json.load(fh, **kwargs), target)
 
 
 def loads(s: Union[str, bytes], target: type, **kwargs: Any) -> Any:
+    """Wraps the standard json loads and read in a single call.
+
+    Args:
+        s: The string to read json from
+        target: The type of object to create
+        **kwargs: Additional arguments passed through to the call to json.loads
+
+    Returns:
+        The new object of the given type
+    """
     return read(json.loads(s, **kwargs), target)
 
 
-########## Writing ##########
+# ---------- Writing ---------- #
 
 
 def write_class_instance(obj: Any, loc: str) -> Any:
@@ -180,7 +228,7 @@ def write_rec(obj: Any, loc: str) -> Any:
         loc = loc if loc.endswith(".") else loc + "."
         return {key: write_rec(value, loc + key) for key, value in obj.items()}
 
-    write_class_instance(obj, loc)
+    return write_class_instance(obj, loc)
 
 
 def write(obj: Any) -> Any:

@@ -12,13 +12,25 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/tyehle/jfjson",
-    py_modules=["jfjson"],
+    packages=["jfjson"],
+    package_dir={"": "src"},
     install_requires=[],
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Development Status :: 4 - Beta",
+
         "License :: OSI Approved :: MIT License",
+
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+
         "Operating System :: OS Independent",
-        "Intended Audience :: Developers",
+
         "Topic :: Software Development",
+
+        "Intended Audience :: Developers",
+
+        "Typing :: Typed",
     ],
 )
