@@ -18,8 +18,8 @@ jfjson.loads('[{"name": "you", "pos": 42, "age": 5.2}]', List[Record])
 
 It also does data validation and type checking
 ```python
-jfjson.loads("12", str)
-# jfjson.core.JsonConversionError: Found <class 'int'>, but was expecting <class 'str'>: at location .
+jfjson.loads('["a", null, 12]', List[Optional[str]])
+# jfjson.core.JsonConversionError: Found <class 'int'>, but was expecting typing.Optional[str]: at location .[2]
 ```
 
 Also knows how to write any class that has a `__dict__` attribute or `_asdict()` function.

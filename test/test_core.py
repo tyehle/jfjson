@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from jfjson.core import JsonConversionError
+import sys
 import unittest
 from typing import List, NamedTuple, Optional
 
@@ -65,6 +66,19 @@ class TestRead(unittest.TestCase):
         self.assertEqual(
             context.exception.msg,
             "Found <class 'dict'>, but was expecting typing.List[test.test_core.C]",
+        )
+
+    def test_optional_list(self) -> None:
+        with self.assertRaises(JsonConversionError) as context:
+            read(["a", None, 12], List[Optional[str]])
+        self.assertEqual(context.exception.loc, ".[2]")
+        if sys.version_info < (3, 9):
+            expected_type = "typing.Union[NoneType, str]"
+        else:
+            expected_type = "typing.Optional[str]"
+        self.assertEqual(
+            context.exception.msg,
+            f"Found <class 'int'>, but was expecting {expected_type}",
         )
 
 

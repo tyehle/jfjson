@@ -86,12 +86,12 @@ def read_rec(obj: Any, target: type, loc: str) -> Any:
     origin = getattr(target, "__origin__", target)
 
     type_err = JsonConversionError(
-        f"Found {type(obj)}, but was expecting {origin}", loc
+        f"Found {type(obj)}, but was expecting {target}", loc
     )
 
     if obj is None:
         is_optional = origin is Union and type(None) in type_args
-        if origin is not type(None) or not is_optional:  # noqa
+        if origin is not type(None) and not is_optional:  # noqa
             raise type_err
         return obj
 
