@@ -21,4 +21,6 @@ build: clean
     python3 setup.py build sdist bdist_wheel
 
 publish: check build
+    git tag "v$(python3 setup.py --version)"
+    git push --tags
     twine upload dist/*
