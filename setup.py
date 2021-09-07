@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="jfjson",
-    version="0.0.2",
+    version="0.0.3",
     author="Tobin Yehle",
     author_email="tobin@yehle.us",
     description="Automatic json parsing and serialing",
@@ -14,6 +14,7 @@ setuptools.setup(
     url="https://github.com/tyehle/jfjson",
     packages=["jfjson"],
     package_dir={"": "src"},
+    package_data={"jfjson": ["py.typed"]},
     install_requires=[],
     classifiers=[
         "Development Status :: 4 - Beta",
