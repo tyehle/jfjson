@@ -1,10 +1,17 @@
 from dataclasses import dataclass
+from enum import Enum
 from jfjson.core import JsonConversionError
 import sys
 import unittest
+import textwrap
 from typing import List, NamedTuple, Optional
 
-from jfjson import read, write
+from jfjson import dumps, read, write
+
+
+class E(Enum):
+    A = "a"
+    B = 1
 
 
 class C:
@@ -81,6 +88,18 @@ class TestRead(unittest.TestCase):
             f"Found <class 'int'>, but was expecting {expected_type}",
         )
 
+    def test_enum(self) -> None:
+        self.assertEqual(read("a", E), E.A)
+        self.assertEqual(read(1, E), E.B)
+        with self.assertRaises(JsonConversionError) as context:
+            read("b", E)
+        self.assertEqual(context.exception.loc, ".")
+        self.assertEqual(context.exception.msg, "Invalid enum")
+
+        inner = context.exception.__context__
+        assert isinstance(inner, ValueError)
+        self.assertEqual(inner.args[0], "'b' is not a valid E")
+
 
 class TestWrite(unittest.TestCase):
     def test_simple_write(self) -> None:
@@ -101,4 +120,39 @@ class TestWrite(unittest.TestCase):
         self.assertEqual(context.exception.msg, "Cannot write b'bad'")
 
     def test_write_dict(self) -> None:
-        pass
+        with self.assertRaises(JsonConversionError) as context:
+            write({"inner": {"a": 2, b"binary": 3, None: 4}})
+        self.assertEqual(context.exception.loc, ".inner")
+        self.assertEqual(
+            context.exception.msg,
+            "Json dict keys are always strings, but found [b'binary', None]",
+        )
+
+    def test_write_class(self) -> None:
+        self.assertEqual(
+            dumps(A(B([C("a"), C("b")], T("x"))), indent=4),
+            textwrap.dedent(
+                """\
+                {
+                    "b": {
+                        "cs": [
+                            {
+                                "s": "a"
+                            },
+                            {
+                                "s": "b"
+                            }
+                        ],
+                        "t": {
+                            "x": "x",
+                            "y": 0,
+                            "z": null
+                        }
+                    }
+                }"""
+            ),
+        )
+
+    def test_write_enum(self) -> None:
+        self.assertEqual(write(E.A), "a")
+        self.assertEqual(write(E.B), 1)

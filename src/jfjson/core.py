@@ -1,3 +1,4 @@
+from enum import Enum, EnumMeta
 import json
 from typing import Any, BinaryIO, Dict, IO, TextIO, Tuple, Union
 
@@ -88,6 +89,13 @@ def read_rec(obj: Any, target: type, loc: str) -> Any:
     type_err = JsonConversionError(
         f"Found {type(obj)}, but was expecting {target}", loc
     )
+
+    # special handling for reading an enum
+    if type(target) is EnumMeta:
+        try:
+            return target(obj)
+        except ValueError:
+            raise JsonConversionError("Invalid enum", loc)
 
     if obj is None:
         is_optional = origin is Union and type(None) in type_args
@@ -215,6 +223,9 @@ def write_class_instance(obj: Any, loc: str) -> Any:
 def write_rec(obj: Any, loc: str) -> Any:
     if obj is None or isinstance(obj, (str, int, float, bool)):
         return obj
+
+    if isinstance(obj, Enum):
+        return obj.value
 
     if isinstance(obj, list):
         return [write_rec(elem, loc + f"[{i}]") for i, elem in enumerate(obj)]
